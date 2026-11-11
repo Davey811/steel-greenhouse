@@ -127,12 +127,16 @@
     <h2>What the switch changes</h2>
     <p>Everything else is identical: the sphere receives the core's power plus whatever the shell radiates onto it, and emits
     <code>σT⁴</code> from its surface; the shell radiates to space from its outer face.</p>
+    <p>Not to be confused with the original: Willis Eschenbach's 2009 steel greenhouse already has the shell emitting from both faces
+    ("a shell has two sides"). The absorb-only inner face comes from Postma's 2013 critique and his later simulations.</p>
     <p><b>Inner face absorbs only</b> is the boundary condition printed on Postma's figures. The shell soaks up the sphere's radiation,
     and in his "back-radiation" run the sphere also receives <code>A_sp·σ·T_sh⁴</code> from the shell, but the shell never loses it.
     Energy is counted twice, so the ledger fills with energy created from nothing: in his own figure, "energy created = P_back".
     The temperature rise in that run is real arithmetic on a broken ledger.</p>
     <p><b>Both faces emit</b> is ordinary physics. A surface that absorbs infrared also emits it (Kirchhoff's law, which follows from
-    the second law of thermodynamics). What the sphere receives from the shell, the shell loses. The ledger stays at zero, space
+    the second law of thermodynamics). What the sphere receives from the shell, the shell loses. Why exactly <code>A_sp·σ·T_sh⁴</code>? The inner face emits
+    <code>A_sh·σ·T_sh⁴</code> inward, but only the fraction <code>A_sp/A_sh</code> hits the sphere (everything the sphere emits hits
+    the shell, and view factors obey reciprocity); the rest crosses the cavity and lands back on the shell. The ledger stays at zero, space
     receives exactly the core's power once the system settles, and the sphere still ends up warmer than without the shell:
     <code>σT_sp⁴ = 235 × (1 + (r_sp/r_sh)²)</code> W/m² for a black shell. With Postma's geometry: 277.6 K instead of 253.7 K.</p>
     <p>Net heat always flows from the warmer sphere to the cooler shell. The shell does not heat the sphere; the core does.

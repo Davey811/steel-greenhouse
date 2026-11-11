@@ -12,6 +12,8 @@ Joseph E. Postma says no, and that the opposite answer violates conservation of 
 
 Postma has not published his code. His figures, however, print the full model: the heat-conduction equation in the shell, the shell's inner and outer boundary conditions, the sphere's energy balance, and all parameters (radii, power, densities, heat capacities, conductivity, starting temperatures, run length). `steel_greenhouse.py` implements exactly those equations. The test of a faithful reconstruction is the output: it matches his figures to the decimal, including the 1912 W he labels "created".
 
+Not to be confused with the original. Willis Eschenbach's 2009 steel greenhouse already has the shell emitting from both faces ("although a sphere only has one side, a shell has two sides") and gets 470 W/m² at the surface. The absorb-only inner face is Postma's: it comes from his 2013 critique, "Revisiting the Steel Greenhouse", and from his later simulations. In this repository, "Postma's model" means only the latter.
+
 ## The numbers
 
 Sphere r = 1.00 m, core power 2953 W (235 W/m²), C = 0.95 MJ/K. Steel shell 1.50–1.52 m, k = 45 W/(m·K), C = 2.20 MJ/K. Black surfaces, vacuum, space at 0 K, shell starting at 0 K. Run length 73.1 h, as in his figures.
@@ -54,7 +56,14 @@ With the inner face emitting, as any absorbing surface does:
 -k dT/dr |inner = sigma * (T_sp^4 - T_in^4) * (r_sp/r_in)^2
 ```
 
-Of what the inner face emits, a fraction `A_sp/A_in` reaches the sphere and the rest crosses the cavity and lands back on the shell. So what the sphere gains, the shell loses. Nothing else changes.
+Why the sphere receives exactly `A_sp * sigma * T_in^4` from the shell, for black concentric spheres:
+
+- the inner face emits `A_in * sigma * T_in^4` in total, inward;
+- everything the sphere emits reaches the shell, so the sphere-to-shell view factor is 1;
+- by reciprocity (`A_sp * F_sp->sh = A_in * F_sh->sp`) the shell-to-sphere view factor is `A_sp/A_in`;
+- so the sphere receives `A_in * sigma * T_in^4 * A_sp/A_in = A_sp * sigma * T_in^4`. The rest, a fraction `1 - A_sp/A_in`, crosses the cavity and lands back on the shell.
+
+A Monte Carlo ray count gives the same fraction (0.2498 for a shell at twice the radius, against 0.25). So what the sphere gains, the shell loses. Nothing else changes.
 
 ## Why the inner face must emit
 
