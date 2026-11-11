@@ -1,0 +1,361 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Steel Greenhouse</title>
+<meta name="description" content="Interactive energy ledger of the steel greenhouse: same model and parameters as Postma's simulation, one boundary term switched.">
+<style>
+  :root {
+    --bg: #0f1419; --panel: #161d24; --line: #2a333d; --fg: #e7e9ea; --dim: #8b98a5;
+    --red: #ff6b6b; --teal: #4fd1c5; --amber: #f6ad55; --green: #68d391;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: var(--bg); color: var(--fg);
+    font: 15px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; }
+  main { max-width: 1080px; margin: 0 auto; padding: 24px 16px 48px; }
+  h1 { font-size: 26px; margin: 0 0 4px; letter-spacing: -0.01em; }
+  .sub { color: var(--dim); margin: 0 0 20px; max-width: 760px; }
+  .grid { display: grid; grid-template-columns: 340px 1fr; gap: 16px; }
+  @media (max-width: 820px) { .grid { grid-template-columns: 1fr; } }
+  .card { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; }
+  .card h2 { font-size: 13px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--dim); margin: 0 0 10px; font-weight: 600; }
+  .mode { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 14px; }
+  .mode button { background: transparent; color: var(--fg); border: 1px solid var(--line); border-radius: 8px;
+    padding: 9px 8px; font: inherit; font-size: 13.5px; cursor: pointer; text-align: left; line-height: 1.3; }
+  .mode button .k { display: block; font-size: 11.5px; color: var(--dim); margin-top: 2px; }
+  .mode button[aria-pressed="true"].phys { border-color: var(--teal); box-shadow: inset 0 0 0 1px var(--teal); }
+  .mode button[aria-pressed="true"].post { border-color: var(--red); box-shadow: inset 0 0 0 1px var(--red); }
+  .bc { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 12.5px; background: #0b1015;
+    border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; margin: 0 0 14px; }
+  label { display: block; font-size: 13.5px; margin: 10px 0 2px; }
+  label output { float: right; color: var(--dim); font-variant-numeric: tabular-nums; }
+  input[type=range] { width: 100%; accent-color: var(--teal); }
+  .note { font-size: 12px; color: var(--dim); margin: 2px 0 0; }
+  .row { display: flex; gap: 8px; margin-top: 14px; }
+  .row button { flex: 1; background: #22303c; color: var(--fg); border: 1px solid var(--line); border-radius: 8px;
+    padding: 8px; font: inherit; font-size: 14px; cursor: pointer; }
+  .row button:hover, .mode button:hover { border-color: var(--dim); }
+  .viz { display: grid; grid-template-columns: 190px 1fr; gap: 14px; align-items: center; margin-top: 12px; }
+  @media (max-width: 560px) { .viz { grid-template-columns: 1fr; } .viz canvas#scene { max-width: 200px; margin: 0 auto; } }
+  canvas { width: 100%; display: block; }
+  .temps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .stat { background: #0b1015; border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; }
+  .stat .l { font-size: 11.5px; color: var(--dim); }
+  .stat .v { font-size: 20px; font-variant-numeric: tabular-nums; }
+  .stat .s { font-size: 11.5px; color: var(--dim); font-variant-numeric: tabular-nums; }
+  table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; font-size: 14px; }
+  td { padding: 5px 0; border-bottom: 1px solid var(--line); }
+  td:last-child { text-align: right; white-space: nowrap; padding-left: 10px; }
+  tr.created td { border-bottom: none; font-weight: 600; font-size: 15.5px; padding-top: 8px; }
+  .ok { color: var(--green); } .bad { color: var(--red); }
+  .ledger-note { font-size: 12.5px; color: var(--dim); margin: 8px 0 0; }
+  .prose { margin-top: 16px; }
+  .prose p { margin: 0 0 10px; max-width: 820px; }
+  .prose code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 13px; background: #0b1015; padding: 1px 5px; border-radius: 4px; }
+  a { color: var(--teal); }
+  footer { margin-top: 24px; color: var(--dim); font-size: 12.5px; }
+</style>
+</head>
+<body>
+<main>
+  <h1>The Steel Greenhouse</h1>
+  <p class="sub">A heated sphere in vacuum inside a thin steel shell. Same model and same parameters as Postma's simulation
+  (sphere 1.00 m, 2953 W; steel shell at 1.52 m; shell starts at 0 K). Flip one switch: does the shell's inner face emit, or not?
+  Then watch the energy ledger.</p>
+
+  <div class="grid">
+    <section class="card" aria-label="Controls">
+      <h2>Shell inner boundary</h2>
+      <div class="mode">
+        <button class="phys" id="bPhys" aria-pressed="true">Both faces emit<span class="k">physics (Kirchhoff)</span></button>
+        <button class="post" id="bPost" aria-pressed="false">Inner face absorbs only<span class="k">Postma's code</span></button>
+      </div>
+      <div class="bc" id="bc"></div>
+
+      <label for="rr">Shell radius / sphere radius <output id="rrO"></output></label>
+      <input id="rr" type="range" min="1.05" max="5" step="0.01" value="1.52">
+      <label for="em">Shell emissivity <output id="emO"></output></label>
+      <input id="em" type="range" min="0.1" max="1" step="0.01" value="1">
+      <p class="note" id="emNote">Steel is not a black body. A less emissive shell insulates better, like a thermos.</p>
+      <label for="sp">Speed <output id="spO"></output></label>
+      <input id="sp" type="range" min="0.5" max="20" step="0.5" value="3">
+
+      <div class="row">
+        <button id="play">Pause</button>
+        <button id="reset">Reset</button>
+      </div>
+    </section>
+
+    <section class="card" aria-label="Simulation">
+      <div class="temps">
+        <div class="stat"><div class="l">time</div><div class="v" id="tH">0 h</div><div class="s">&nbsp;</div></div>
+        <div class="stat"><div class="l">sphere</div><div class="v" id="tSp"></div><div class="s" id="tSpL"></div></div>
+        <div class="stat"><div class="l">shell</div><div class="v" id="tSh"></div><div class="s" id="tShL"></div></div>
+      </div>
+      <div class="viz">
+        <canvas id="scene" width="400" height="400" aria-label="Sphere and shell, coloured by temperature"></canvas>
+        <canvas id="chart" width="600" height="340" aria-label="Temperatures over time: solid sphere, dashed shell"></canvas>
+      </div>
+    </section>
+  </div>
+
+  <div class="grid" style="margin-top:16px">
+    <section class="card" aria-label="Energy ledger">
+      <h2>Energy ledger since start</h2>
+      <table>
+        <tr><td>Produced by the core</td><td id="eProd"></td></tr>
+        <tr><td>Radiated to space</td><td id="eOut"></td></tr>
+        <tr><td>Stored (sphere + shell warming up)</td><td id="eSto"></td></tr>
+        <tr class="created"><td>Created from nothing</td><td id="eCre"></td></tr>
+      </table>
+      <p class="ledger-note">created = to space + stored − produced. Energy conservation means this stays at zero.</p>
+    </section>
+    <section class="card" aria-label="Power now">
+      <h2>Power right now</h2>
+      <table>
+        <tr><td>Core</td><td id="pCore"></td></tr>
+        <tr><td>Shell to space</td><td id="pOut"></td></tr>
+        <tr><td>Shell's emission reaching the sphere</td><td id="pBack"></td></tr>
+        <tr><td>…and paid for by the shell?</td><td id="pPaid"></td></tr>
+      </table>
+      <p class="ledger-note" id="verdict"></p>
+    </section>
+  </div>
+
+  <section class="card prose" aria-label="Explanation">
+    <h2>What the switch changes</h2>
+    <p>Everything else is identical: the sphere receives the core's power plus whatever the shell radiates onto it, and emits
+    <code>σT⁴</code> from its surface; the shell radiates to space from its outer face.</p>
+    <p><b>Inner face absorbs only</b> is the boundary condition in Postma's simulation. The shell soaks up the sphere's radiation,
+    and in his "back-radiation" run the sphere also receives <code>A_sp·σ·T_sh⁴</code> from the shell, but the shell never loses it.
+    Energy is counted twice, so the ledger fills with energy created from nothing: in his own figure, "energy created = P_back".
+    The temperature rise in that run is real arithmetic on a broken ledger.</p>
+    <p><b>Both faces emit</b> is ordinary physics. A surface that absorbs infrared also emits it (Kirchhoff's law, which follows from
+    the second law of thermodynamics). What the sphere receives from the shell, the shell loses. The ledger stays at zero, space
+    receives exactly the core's power once the system settles, and the sphere still ends up warmer than without the shell:
+    <code>σT_sp⁴ = 235 × (1 + (r_sp/r_sh)²)</code> W/m² for a black shell. With Postma's geometry: 277.6 K instead of 253.7 K.</p>
+    <p>Net heat always flows from the warmer sphere to the cooler shell. The shell does not heat the sphere; the core does.
+    The shell reduces how fast the sphere loses heat, so the sphere must get warmer to get rid of the same 2953 W.</p>
+    <p>The same thing keeps spacecraft instruments warm: a radioisotope heater of about 1 W, wrapped in multilayer insulation, in vacuum.</p>
+  </section>
+
+  <footer>
+    Lumped model (one temperature for the sphere, one for the shell; the steel wall's conduction drop is 0.05 K).
+    The Python script in this repository solves the radial heat-conduction equation through the wall and reproduces Postma's
+    figures number by number. Sphere C = 0.95 MJ/K; shell: steel, 2 cm thick, ρ = 7850 kg/m³, c = 490 J/(kg·K).
+    <br>by <a href="https://x.com/splugged">@splugged</a>
+  </footer>
+</main>
+
+<script>
+(() => {
+  const SIGMA = 5.670374419e-8, RSP = 1.0, ASP = 4 * Math.PI * RSP * RSP, P = 2953, CSP = 0.95e6;
+  const T0 = Math.pow(P / ASP / SIGMA, 0.25);           // 253.7 K
+  const RHO = 7850, CST = 490, THICK = 0.02;
+  const $ = id => document.getElementById(id);
+
+  const state = { mode: "phys", ratio: 1.52, eps: 1, speed: 3, running: true };
+  let sim;
+
+  function params() {
+    const rsh = state.ratio * RSP, ash = 4 * Math.PI * rsh * rsh;
+    const csh = RHO * CST * ash * THICK;
+    const eps = state.mode === "phys" ? state.eps : 1;
+    return { ash, csh, eps, x: ASP / ash };
+  }
+
+  // fluxes (W) for current temperatures
+  function fluxes(Tsp, Tsh, p) {
+    let sphereNet, shellIn, toSphere, paid;
+    if (state.mode === "phys") {
+      const D = 1 + p.x * (1 / p.eps - 1);
+      const qNet = ASP * SIGMA * (Tsp ** 4 - Tsh ** 4) / D;      // net sphere -> shell (gray concentric)
+      sphereNet = P - qNet;
+      shellIn = qNet;
+      toSphere = ASP * SIGMA * Tsh ** 4 / D;                     // shell emission absorbed by sphere
+      paid = toSphere;
+    } else {
+      toSphere = ASP * SIGMA * Tsh ** 4;                         // added to the sphere...
+      sphereNet = P + toSphere - ASP * SIGMA * Tsp ** 4;
+      shellIn = ASP * SIGMA * Tsp ** 4;                          // ...never removed from the shell
+      paid = 0;
+    }
+    const out = p.eps * p.ash * SIGMA * Tsh ** 4;
+    return { sphereNet, shellNet: shellIn - out, out, toSphere, paid };
+  }
+
+  function steady(p) {
+    const q = P / ASP;
+    if (state.mode === "phys") {
+      const Tsp = Math.pow(q * (1 + p.x * (2 / p.eps - 1)) / SIGMA, 0.25);
+      const Tsh = Math.pow(P / (p.eps * p.ash * SIGMA), 0.25);
+      return { Tsp, Tsh, out: P };
+    }
+    const Tsp = Math.pow(q / (1 - p.x) / SIGMA, 0.25);
+    const Tsh = Math.pow(p.x * SIGMA * Tsp ** 4 / SIGMA, 0.25);
+    return { Tsp, Tsh, out: ASP * SIGMA * Tsp ** 4 };
+  }
+
+  function reset() {
+    const p = params();
+    sim = { t: 0, Tsp: T0, Tsh: 0, prod: 0, out: 0, p, hist: [[0, T0, 0]], ss: steady(p) };
+    $("bc").textContent = state.mode === "phys"
+      ? "shell inner face:  q = A_sp·σ·(T_sp⁴ − T_sh⁴)"
+      : "shell inner face:  q = A_sp·σ·T_sp⁴      (no −T_sh⁴)";
+    $("em").disabled = state.mode !== "phys";
+    $("emNote").textContent = state.mode === "phys"
+      ? "Steel is not a black body. A less emissive shell insulates better, like a thermos."
+      : "Postma's run uses black surfaces; emissivity fixed at 1 in this mode.";
+    render();
+  }
+
+  function step(dt) {
+    const p = sim.p;
+    const f = (Tsp, Tsh) => { const F = fluxes(Tsp, Tsh, p); return [F.sphereNet / CSP, F.shellNet / p.csh, F.out]; };
+    const a = f(sim.Tsp, sim.Tsh);
+    const b = f(sim.Tsp + a[0] * dt / 2, sim.Tsh + a[1] * dt / 2);
+    const c = f(sim.Tsp + b[0] * dt / 2, sim.Tsh + b[1] * dt / 2);
+    const d = f(sim.Tsp + c[0] * dt, sim.Tsh + c[1] * dt);
+    sim.Tsp += dt / 6 * (a[0] + 2 * b[0] + 2 * c[0] + d[0]);
+    sim.Tsh += dt / 6 * (a[1] + 2 * b[1] + 2 * c[1] + d[1]);
+    sim.out += dt / 6 * (a[2] + 2 * b[2] + 2 * c[2] + d[2]);
+    sim.prod += P * dt;
+    sim.t += dt;
+  }
+
+  // ---------- drawing ----------
+  const stops = [[0, [13, 8, 135]], [80, [106, 0, 168]], [160, [177, 42, 144]], [220, [225, 100, 98]],
+                 [270, [252, 166, 54]], [330, [240, 249, 33]]];
+  function tcolor(T) {
+    if (T <= stops[0][0]) return `rgb(${stops[0][1]})`;
+    for (let i = 1; i < stops.length; i++) if (T <= stops[i][0]) {
+      const [t0, c0] = stops[i - 1], [t1, c1] = stops[i], f = (T - t0) / (t1 - t0);
+      return `rgb(${c0.map((v, k) => Math.round(v + f * (c1[k] - v))).join(",")})`;
+    }
+    return `rgb(${stops[stops.length - 1][1]})`;
+  }
+
+  function drawScene() {
+    const cv = $("scene"), g = cv.getContext("2d"), W = cv.width, H = cv.height, cx = W / 2, cy = H / 2;
+    g.clearRect(0, 0, W, H);
+    const Rmax = W * 0.46, rsh = Rmax, rsp = Rmax / state.ratio;
+    g.lineWidth = Math.max(6, W * 0.02);
+    g.strokeStyle = tcolor(sim.Tsh);
+    g.beginPath(); g.arc(cx, cy, rsh - g.lineWidth / 2, 0, 2 * Math.PI); g.stroke();
+    const grd = g.createRadialGradient(cx - rsp * 0.3, cy - rsp * 0.3, rsp * 0.1, cx, cy, rsp);
+    grd.addColorStop(0, "rgba(255,255,255,0.25)"); grd.addColorStop(1, "rgba(0,0,0,0.15)");
+    g.fillStyle = tcolor(sim.Tsp); g.beginPath(); g.arc(cx, cy, rsp, 0, 2 * Math.PI); g.fill();
+    g.fillStyle = grd; g.fill();
+    // arrows: sphere -> shell (yellow), shell -> sphere (amber or red if unpaid), shell -> space
+    const F = fluxes(sim.Tsp, sim.Tsh, sim.p);
+    const n = 12;
+    for (let i = 0; i < n; i++) {
+      const th = (i + 0.5) * 2 * Math.PI / n, c = Math.cos(th), s = Math.sin(th);
+      const inner = rsp + 6, outer = rsh - g.lineWidth - 6;
+      if (outer - inner > 14) {
+        line(g, cx + c * inner, cy + s * inner, cx + c * (inner + (outer - inner) * 0.45), cy + s * (inner + (outer - inner) * 0.45), "#ffd166", 2);
+        if (F.toSphere > 1) {
+          const col = state.mode === "phys" ? "#4fd1c5" : "#ff6b6b";
+          const a = (i % 2) ? 0.55 : 0.6;
+          line(g, cx + c * outer, cy + s * outer, cx + c * (outer - (outer - inner) * 0.4), cy + s * (outer - (outer - inner) * 0.4), col, 2, Math.min(1, F.toSphere / 1500) * a + 0.25);
+        }
+      }
+    }
+  }
+  function line(g, x0, y0, x1, y1, col, w, alpha = 1) {
+    g.save(); g.globalAlpha = alpha; g.strokeStyle = col; g.lineWidth = w;
+    g.beginPath(); g.moveTo(x0, y0); g.lineTo(x1, y1); g.stroke(); g.restore();
+  }
+
+  function drawChart() {
+    const cv = $("chart"), g = cv.getContext("2d"), dpr = window.devicePixelRatio || 1;
+    const W = Math.max(260, cv.clientWidth || 600), H = Math.round(W * 0.58);
+    if (cv.width !== Math.round(W * dpr) || cv.height !== Math.round(H * dpr)) { cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr); }
+    g.setTransform(dpr, 0, 0, dpr, 0, 0);
+    g.clearRect(0, 0, W, H);
+    const L = 40, R = 10, Tp = 22, B = 26;
+    const tmax = Math.max(80, sim.t / 3600 * 1.05);
+    const ymax = Math.max(320, Math.ceil(Math.max(sim.ss.Tsp, ...sim.hist.map(h => h[1])) / 50) * 50 + 10);
+    const X = t => L + (W - L - R) * t / tmax, Y = T => Tp + (H - Tp - B) * (1 - T / ymax);
+    g.font = "12px -apple-system, Segoe UI, Roboto, sans-serif"; g.fillStyle = "#8b98a5"; g.strokeStyle = "#2a333d"; g.lineWidth = 1;
+    g.textAlign = "right";
+    for (let T = 0; T <= ymax; T += 50) { g.beginPath(); g.moveTo(L, Y(T)); g.lineTo(W - R, Y(T)); g.stroke(); g.fillText(T, L - 6, Y(T) + 4); }
+    g.textAlign = "center";
+    const tstep = tmax > 200 ? 50 : tmax > 100 ? 25 : 10;
+    for (let t = 0; t <= tmax; t += tstep) if (X(t) < W - R - 58) g.fillText(t, X(t), H - 8);
+    g.textAlign = "left"; g.fillText("K", 6, 12); g.textAlign = "right"; g.fillText("time (h)", W - R, H - 8); g.textAlign = "left";
+    // references
+    dash(g, Y(T0), "#8b98a5", "sphere alone 253.7 K", L, W - R, 14);
+    const col = state.mode === "phys" ? "#4fd1c5" : "#ff6b6b";
+    dash(g, Y(sim.ss.Tsp), col, `sphere long run ${sim.ss.Tsp.toFixed(1)} K`, L, W - R);
+    // curves
+    curve(g, sim.hist.map(h => [X(h[0]), Y(h[1])]), col, 2.5);
+    curve(g, sim.hist.map(h => [X(h[0]), Y(h[2])]), col, 1.6, [6, 5]);
+  }
+  function dash(g, y, col, txt, x0, x1, off = -5) {
+    g.save(); g.setLineDash([4, 6]); g.strokeStyle = col; g.globalAlpha = 0.8; g.beginPath(); g.moveTo(x0, y); g.lineTo(x1, y); g.stroke();
+    g.setLineDash([]); g.fillStyle = col; g.textAlign = "right"; g.fillText(txt, x1 - 4, y + off); g.textAlign = "left"; g.restore();
+  }
+  function curve(g, pts, col, w, dashArr) {
+    g.save(); if (dashArr) g.setLineDash(dashArr); g.strokeStyle = col; g.lineWidth = w; g.beginPath();
+    pts.forEach(([x, y], i) => i ? g.lineTo(x, y) : g.moveTo(x, y)); g.stroke(); g.restore();
+  }
+
+  const fmtK = T => `${T.toFixed(1)} K`, fmtMJ = J => `${(J / 1e6).toFixed(1)} MJ`, fmtW = W => `${Math.round(W)} W`;
+
+  function render() {
+    const p = sim.p, F = fluxes(sim.Tsp, sim.Tsh, p);
+    $("tH").textContent = `${(sim.t / 3600).toFixed(1)} h`;
+    $("tSp").textContent = fmtK(sim.Tsp); $("tSh").textContent = fmtK(sim.Tsh);
+    $("tSpL").textContent = `long run ${fmtK(sim.ss.Tsp)}`; $("tShL").textContent = `long run ${fmtK(sim.ss.Tsh)}`;
+    const stored = CSP * (sim.Tsp - T0) + p.csh * sim.Tsh;
+    const created = sim.out + stored - sim.prod;
+    $("eProd").textContent = fmtMJ(sim.prod); $("eOut").textContent = fmtMJ(sim.out); $("eSto").textContent = fmtMJ(stored);
+    const ce = $("eCre"); const zero = Math.abs(created) < 0.05e6;
+    ce.textContent = zero ? "0.0 MJ" : `${created > 0 ? "+" : ""}${fmtMJ(created)}`;
+    ce.className = zero ? "ok" : "bad";
+    $("pCore").textContent = fmtW(P); $("pOut").textContent = fmtW(F.out);
+    $("pBack").textContent = fmtW(F.toSphere);
+    const paid = $("pPaid"); paid.textContent = state.mode === "phys" ? "yes" : "no";
+    paid.className = state.mode === "phys" ? "ok" : "bad";
+    $("verdict").textContent = state.mode === "phys"
+      ? `The shell loses what it sends back. In the long run space receives exactly ${fmtW(P)}, and the sphere settles at ${fmtK(sim.ss.Tsp)}, ${(sim.ss.Tsp - T0).toFixed(1)} K warmer than without the shell.`
+      : `The shell sends ${fmtW(F.toSphere)} to the sphere without losing it. In the long run space would receive ${fmtW(sim.ss.out)} from a ${fmtW(P)} core: that excess is the "created" energy.`;
+    $("rrO").textContent = state.ratio.toFixed(2); $("emO").textContent = (state.mode === "phys" ? state.eps : 1).toFixed(2);
+    $("spO").textContent = `${state.speed} h/s`;
+    drawScene(); drawChart();
+  }
+
+  let last = performance.now();
+  function loop(now) {
+    const wall = Math.min(0.1, (now - last) / 1000); last = now;
+    if (state.running && sim.t < 400 * 3600) {
+      let simSec = wall * state.speed * 3600; const dt = 60;
+      while (simSec > 0) { const h = Math.min(dt, simSec); step(h); simSec -= h; }
+      const th = sim.t / 3600, lh = sim.hist[sim.hist.length - 1][0];
+      if (th - lh >= 0.25) sim.hist.push([th, sim.Tsp, sim.Tsh]);
+      render();
+    }
+    requestAnimationFrame(loop);
+  }
+
+  function setMode(m) {
+    state.mode = m;
+    $("bPhys").setAttribute("aria-pressed", m === "phys"); $("bPost").setAttribute("aria-pressed", m === "post");
+    reset();
+  }
+  $("bPhys").onclick = () => setMode("phys");
+  $("bPost").onclick = () => setMode("post");
+  $("rr").oninput = e => { state.ratio = +e.target.value; reset(); };
+  $("em").oninput = e => { state.eps = +e.target.value; reset(); };
+  $("sp").oninput = e => { state.speed = +e.target.value; render(); };
+  $("play").onclick = () => { state.running = !state.running; $("play").textContent = state.running ? "Pause" : "Play"; };
+  $("reset").onclick = reset;
+
+  reset();
+  requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>
