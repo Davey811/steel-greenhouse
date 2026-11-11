@@ -4,7 +4,7 @@ A heated sphere in vacuum, wrapped in a thin steel shell. Does the shell make th
 
 Joseph E. Postma says no, and that the opposite answer violates conservation of energy. He has published simulations to show it. This repository reproduces those simulations **with his own model and parameters, number by number**, and shows where the "created" energy in them comes from: **one term in the shell's inner boundary condition**.
 
-**Interactive page:** `https://<your-username>.github.io/steel-greenhouse/` (flip the switch and watch the energy ledger)
+**Interactive page:** `https://Davey811.github.io/steel-greenhouse/` (flip the switch and watch the energy ledger)
 
 ![Same code, one term](results/one_term.png)
 
