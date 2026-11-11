@@ -6,7 +6,7 @@ Joseph E. Postma says no, and that the opposite answer violates conservation of 
 
 **Interactive page:** `https://Davey811.github.io/steel-greenhouse/` (flip the switch and watch the energy ledger)
 
-![Same code, one term](results/one_term.png)
+![Same model, one term](results/one_term.png)
 
 ## Where the model comes from
 

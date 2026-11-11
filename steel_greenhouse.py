@@ -150,7 +150,7 @@ def main():
     with open(os.path.join(a.out, "results.txt"), "w") as f:
         f.write("\n".join(lines) + "\n")
 
-    # ---- figure 1: same code, one term -------------------------------------
+    # ---- figure 1: same model, one term -------------------------------------
     BG, FG, DIM = "#0f1419", "#e7e9ea", "#8b98a5"
     plt.rcParams.update({"text.color": FG, "axes.labelcolor": FG, "xtick.color": DIM, "ytick.color": DIM,
                          "axes.edgecolor": DIM, "figure.facecolor": BG, "axes.facecolor": BG,
@@ -166,7 +166,7 @@ def main():
     ax1.set_ylabel("Temperature (K)")
     ax1.legend(loc="lower right", frameon=False, fontsize=9)
     ax1.grid(alpha=0.15)
-    ax1.set_title("The steel greenhouse: same code, same parameters, one term in the shell's inner boundary",
+    ax1.set_title("The steel greenhouse: same model, same parameters, one term in the shell's inner boundary",
                   loc="left", fontsize=12.5, pad=10)
 
     ax2.axhline(P_INT, color=DIM, ls=":", lw=1)
