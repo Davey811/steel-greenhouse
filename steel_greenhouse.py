@@ -159,8 +159,8 @@ def main():
     fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(11, 8.2), dpi=160, sharex=True)
     ax1.axhline(T_SP0, color=DIM, ls=":", lw=1)
     ax1.text(1, T_SP0 + 3, "sphere alone 253.7 K", color=DIM, fontsize=9)
-    ax1.plot(B["t"], B["T_sp"], color="#ff6b6b", lw=2.2, label="sphere, Postma's back-radiation code")
-    ax1.plot(B["t"], B["T_out"], color="#ff6b6b", lw=1.4, ls="--", label="shell, Postma's back-radiation code")
+    ax1.plot(B["t"], B["T_sp"], color="#ff6b6b", lw=2.2, label="sphere, Postma's back-radiation model")
+    ax1.plot(B["t"], B["T_out"], color="#ff6b6b", lw=1.4, ls="--", label="shell, Postma's back-radiation model")
     ax1.plot(Ph["t"], Ph["T_sp"], color="#4fd1c5", lw=2.2, label="sphere, shell emits from both faces")
     ax1.plot(Ph["t"], Ph["T_out"], color="#4fd1c5", lw=1.4, ls="--", label="shell, shell emits from both faces")
     ax1.set_ylabel("Temperature (K)")
@@ -171,7 +171,7 @@ def main():
 
     ax2.axhline(P_INT, color=DIM, ls=":", lw=1)
     ax2.text(1, P_INT + 60, "core power 2953 W", color=DIM, fontsize=9)
-    ax2.plot(B["t"], B["p_out"], color="#ff6b6b", lw=2, label="power to space, Postma's code")
+    ax2.plot(B["t"], B["p_out"], color="#ff6b6b", lw=2, label="power to space, Postma's model")
     ax2.plot(B["t"], B["p_back"], color="#f6ad55", lw=1.6, ls="--", label="back-radiation the shell never pays for")
     ax2.plot(Ph["t"], Ph["p_out"], color="#4fd1c5", lw=2, label="power to space, shell emits from both faces")
     ax2.set_ylabel("Power (W)")
@@ -181,7 +181,7 @@ def main():
     eB, eP = at(B, a.hours), at(Ph, a.hours)
     sB, sP = steady_state("backradiation"), steady_state("physics")
     ax2.text(0.99, 0.04,
-             f"Postma's code: energy created {eB['created'] / 1e6:+.0f} MJ, long run {sB[0]:.1f} K, "
+             f"Postma's model: energy created {eB['created'] / 1e6:+.0f} MJ, long run {sB[0]:.1f} K, "
              f"{A_SP * SIGMA * sB[0] ** 4:.0f} W to space\n"
              f"Both faces emit: energy created {eP['created'] / 1e6:+.1f} MJ, long run {sP[0]:.1f} K, "
              f"{P_INT:.0f} W to space",

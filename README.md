@@ -2,11 +2,15 @@
 
 A heated sphere in vacuum, wrapped in a thin steel shell. Does the shell make the sphere warmer?
 
-Joseph E. Postma says no, and that the opposite answer violates conservation of energy. He has published simulations to show it. This repository reproduces those simulations **with his own model and parameters, number by number**, and shows where the "created" energy in them comes from: **one term in the shell's inner boundary condition**.
+Joseph E. Postma says no, and that the opposite answer violates conservation of energy. He has published simulations to show it. His code is not public, but his figures print the equations and every parameter. This repository rebuilds the model **from those equations and parameters**, reproduces his results **number by number**, and shows where the "created" energy comes from: **one term in the shell's inner boundary condition**.
 
 **Interactive page:** `https://Davey811.github.io/steel-greenhouse/` (flip the switch and watch the energy ledger)
 
 ![Same code, one term](results/one_term.png)
+
+## Where the model comes from
+
+Postma has not published his code. His figures, however, print the full model: the heat-conduction equation in the shell, the shell's inner and outer boundary conditions, the sphere's energy balance, and all parameters (radii, power, densities, heat capacities, conductivity, starting temperatures, run length). `steel_greenhouse.py` implements exactly those equations. The test of a faithful reconstruction is the output: it matches his figures to the decimal, including the 1912 W he labels "created".
 
 ## The numbers
 
@@ -54,7 +58,7 @@ Of what the inner face emits, a fraction `A_sp/A_in` reaches the sphere and the 
 
 ## Why the inner face must emit
 
-Kirchhoff's law: a surface that absorbs infrared also emits it. It follows from the second law of thermodynamics. A surface that absorbed without emitting, placed inside a cavity at uniform temperature, would warm itself above the cavity, with no work done. The shell in Postma's code is exactly such a surface.
+Kirchhoff's law: a surface that absorbs infrared also emits it. It follows from the second law of thermodynamics. A surface that absorbed without emitting, placed inside a cavity at uniform temperature, would warm itself above the cavity, with no work done. The shell in Postma's model is exactly such a surface.
 
 ## Steady state, any shell
 
