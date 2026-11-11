@@ -1,6 +1,0 @@
-original       t = 73.1 h: T_sp = 253.7 K, T_sh = 203.7 K, P_out = 2835 W, P_back = 0 W, created = -0.0 MJ
-               long-run limit: T_sp = 253.7 K, T_sh = 205.8 K
-backradiation  t = 73.1 h: T_sp = 286.0 K, T_sh = 227.5 K, P_out = 4409 W, P_back = 1910 W, created = +187.2 MJ
-               long-run limit: T_sp = 292.4 K, T_sh = 237.2 K
-physics        t = 73.1 h: T_sp = 275.5 K, T_sh = 202.1 K, P_out = 2747 W, P_back = 1190 W, created = +0.0 MJ
-               long-run limit: T_sp = 277.6 K, T_sh = 205.8 K
