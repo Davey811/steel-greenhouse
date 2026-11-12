@@ -4,7 +4,7 @@ A heated sphere in vacuum, wrapped in a thin steel shell. Does the shell make th
 
 Joseph E. Postma says no, and that the opposite answer violates conservation of energy. He has published simulations to show it. His code is not public, but his figures print the equations and every parameter. This repository rebuilds the model **from those equations and parameters**, reproduces his results **number by number**, and shows where the "created" energy comes from: **one term in the shell's inner boundary condition**.
 
-**Interactive page:** `https://Davey811.github.io/steel-greenhouse/` (flip the switch and watch the energy ledger)
+**Interactive page:** https://davey811.github.io/steel-greenhouse/ (run Postma's two simulations and the corrected one in your browser, and watch the energy ledger)
 
 ![Same model, one term](results/one_term.png)
 
@@ -103,7 +103,7 @@ python3 steel_greenhouse.py --hours 500  # closer to the long-run limits
 
 The script solves the radial heat-conduction equation through the steel wall (finite volumes, implicit BDF integrator) coupled to the sphere, prints the table above to `results/results.txt` and writes `results/one_term.png` and `results/any_radius.png`.
 
-`index.html` is a self-contained interactive version with a lumped model (one temperature for the sphere, one for the shell; the wall's conduction drop is 0.05 K, so the results agree).
+`index.html` solves the same equations in the browser (20 finite volumes across the steel wall, implicit one-minute time steps) and shows them on screen, with the one term that changes highlighted. At 73.1 h it gives 286.0 K, 227.5 K, 4407 W to space and 187.1 MJ created for Postma's back-radiation run, and 275.5 K with 0.0 MJ created when the shell emits from both faces.
 
 To publish the page: repository **Settings → Pages → Deploy from a branch → main, / (root)**.
 

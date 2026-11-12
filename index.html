@@ -4,44 +4,54 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>The Steel Greenhouse</title>
-<meta name="description" content="Interactive energy ledger of the steel greenhouse: same model and parameters as Postma's simulation, one boundary term switched.">
+<meta name="description" content="Postma's steel greenhouse model, rebuilt from the equations on his figures and solved in your browser. Three runs, one live energy ledger.">
 <style>
   :root {
     --bg: #0f1419; --panel: #161d24; --line: #2a333d; --fg: #e7e9ea; --dim: #8b98a5;
-    --red: #ff6b6b; --teal: #4fd1c5; --amber: #f6ad55; --green: #68d391;
+    --red: #ff6b6b; --teal: #4fd1c5; --amber: #f6ad55; --green: #68d391; --grey: #a0aec0;
   }
   * { box-sizing: border-box; }
   html, body { margin: 0; background: var(--bg); color: var(--fg);
     font: 15px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; }
   main { max-width: 1080px; margin: 0 auto; padding: 24px 16px 48px; }
   h1 { font-size: 26px; margin: 0 0 4px; letter-spacing: -0.01em; }
-  .sub { color: var(--dim); margin: 0 0 20px; max-width: 760px; }
-  .grid { display: grid; grid-template-columns: 340px 1fr; gap: 16px; }
-  @media (max-width: 820px) { .grid { grid-template-columns: 1fr; } }
+  .sub { color: var(--dim); margin: 0 0 20px; max-width: 780px; }
+  .grid { display: grid; grid-template-columns: 360px 1fr; gap: 16px; }
+  @media (max-width: 860px) { .grid { grid-template-columns: 1fr; } }
   .card { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; }
-  .card h2 { font-size: 13px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--dim); margin: 0 0 10px; font-weight: 600; }
-  .mode { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 14px; }
+  .card h2 { font-size: 14px; color: var(--dim); margin: 0 0 10px; font-weight: 600; }
+  .mode { display: grid; grid-template-columns: 1fr; gap: 6px; margin-bottom: 12px; }
   .mode button { background: transparent; color: var(--fg); border: 1px solid var(--line); border-radius: 8px;
-    padding: 9px 8px; font: inherit; font-size: 13.5px; cursor: pointer; text-align: left; line-height: 1.3; }
-  .mode button .k { display: block; font-size: 11.5px; color: var(--dim); margin-top: 2px; }
-  .mode button[aria-pressed="true"].phys { border-color: var(--teal); box-shadow: inset 0 0 0 1px var(--teal); }
-  .mode button[aria-pressed="true"].post { border-color: var(--red); box-shadow: inset 0 0 0 1px var(--red); }
-  .bc { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 12.5px; background: #0b1015;
-    border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; margin: 0 0 14px; }
+    padding: 8px 10px; font: inherit; font-size: 14px; cursor: pointer; text-align: left; line-height: 1.3; }
+  .mode button .k { display: block; font-size: 12px; color: var(--dim); margin-top: 1px; }
+  .mode button[aria-pressed="true"][data-m="original"] { border-color: var(--grey); box-shadow: inset 0 0 0 1px var(--grey); }
+  .mode button[aria-pressed="true"][data-m="backrad"] { border-color: var(--red); box-shadow: inset 0 0 0 1px var(--red); }
+  .mode button[aria-pressed="true"][data-m="physics"] { border-color: var(--teal); box-shadow: inset 0 0 0 1px var(--teal); }
+  .eq { background: #0b1015; border: 1px solid var(--line); border-radius: 8px; padding: 10px 10px; margin: 0 0 12px;
+    display: grid; grid-template-columns: 70px 1fr; gap: 6px 6px; align-items: baseline;
+    font-family: "Cambria Math", "STIX Two Math", "Times New Roman", serif; font-size: 15px; line-height: 1.45; }
+  .eq .l { color: var(--dim); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; font-size: 12.5px; }
+  .eq .e { min-width: 0; }
+  .eq .e .note { display: block; }
+  .eq mark { background: rgba(79, 209, 197, 0.18); color: var(--teal); border-radius: 3px; padding: 0 2px; }
+  .eq mark.bad { background: rgba(255, 107, 107, 0.16); color: var(--red); }
+  .eq .note { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; font-size: 12px; color: var(--dim); }
   label { display: block; font-size: 13.5px; margin: 10px 0 2px; }
   label output { float: right; color: var(--dim); font-variant-numeric: tabular-nums; }
   input[type=range] { width: 100%; accent-color: var(--teal); }
+  input[disabled] { opacity: 0.4; }
   .note { font-size: 12px; color: var(--dim); margin: 2px 0 0; }
   .row { display: flex; gap: 8px; margin-top: 14px; }
   .row button { flex: 1; background: #22303c; color: var(--fg); border: 1px solid var(--line); border-radius: 8px;
     padding: 8px; font: inherit; font-size: 14px; cursor: pointer; }
   .row button:hover, .mode button:hover { border-color: var(--dim); }
+  button:focus-visible, input:focus-visible { outline: 2px solid var(--teal); outline-offset: 2px; }
   .viz { display: grid; grid-template-columns: 190px 1fr; gap: 14px; align-items: center; margin-top: 12px; }
   @media (max-width: 560px) { .viz { grid-template-columns: 1fr; } .viz canvas#scene { max-width: 200px; margin: 0 auto; } }
   canvas { width: 100%; display: block; }
   .temps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
   .stat { background: #0b1015; border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; }
-  .stat .l { font-size: 11.5px; color: var(--dim); }
+  .stat .lb { font-size: 11.5px; color: var(--dim); }
   .stat .v { font-size: 20px; font-variant-numeric: tabular-nums; }
   .stat .s { font-size: 11.5px; color: var(--dim); font-variant-numeric: tabular-nums; }
   table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; font-size: 14px; }
@@ -60,24 +70,26 @@
 <body>
 <main>
   <h1>The Steel Greenhouse</h1>
-  <p class="sub">A heated sphere in vacuum inside a thin steel shell. Postma's model, rebuilt from the equations and parameters printed on his figures
-  (sphere 1.00 m, 2953 W; steel shell at 1.52 m; shell starts at 0 K). Flip one switch: does the shell's inner face emit, or not?
-  Then watch the energy ledger.</p>
+  <p class="sub">A heated sphere in vacuum inside a thin steel shell. This is Postma's model, rebuilt from the equations and parameters
+  printed on his figures (sphere 1.00 m, 2953 W; steel shell 1.50–1.52 m, starting at 0 K) and solved in your browser: heat conduction
+  through the steel wall, radiation at both of its faces. Pick one of his runs, then the one with the shell's inner face emitting,
+  and watch the energy ledger.</p>
 
   <div class="grid">
     <section class="card" aria-label="Controls">
-      <h2>Shell inner boundary</h2>
-      <div class="mode">
-        <button class="phys" id="bPhys" aria-pressed="true">Both faces emit<span class="k">physics (Kirchhoff)</span></button>
-        <button class="post" id="bPost" aria-pressed="false">Inner face absorbs only<span class="k">Postma's model</span></button>
+      <h2>Run</h2>
+      <div class="mode" role="group" aria-label="Run">
+        <button data-m="original" aria-pressed="false">Sphere held at 253.7 K<span class="k">Postma's original run</span></button>
+        <button data-m="backrad" aria-pressed="false">Back-radiation added to the sphere<span class="k">Postma's back-radiation run</span></button>
+        <button data-m="physics" aria-pressed="true">Shell emits from both faces<span class="k">physics (Kirchhoff)</span></button>
       </div>
-      <div class="bc" id="bc"></div>
+      <div class="eq" id="eq" aria-live="polite"></div>
 
-      <label for="rr">Shell radius / sphere radius <output id="rrO"></output></label>
-      <input id="rr" type="range" min="1.05" max="5" step="0.01" value="1.52">
+      <label for="rr">Shell inner radius / sphere radius <output id="rrO"></output></label>
+      <input id="rr" type="range" min="1.05" max="5" step="0.01" value="1.5">
       <label for="em">Shell emissivity <output id="emO"></output></label>
       <input id="em" type="range" min="0.1" max="1" step="0.01" value="1">
-      <p class="note" id="emNote">Steel is not a black body. A less emissive shell insulates better, like a thermos.</p>
+      <p class="note" id="emNote"></p>
       <label for="sp">Speed <output id="spO"></output></label>
       <input id="sp" type="range" min="0.5" max="20" step="0.5" value="3">
 
@@ -89,9 +101,9 @@
 
     <section class="card" aria-label="Simulation">
       <div class="temps">
-        <div class="stat"><div class="l">time</div><div class="v" id="tH">0 h</div><div class="s">&nbsp;</div></div>
-        <div class="stat"><div class="l">sphere</div><div class="v" id="tSp"></div><div class="s" id="tSpL"></div></div>
-        <div class="stat"><div class="l">shell</div><div class="v" id="tSh"></div><div class="s" id="tShL"></div></div>
+        <div class="stat"><div class="lb">time</div><div class="v" id="tH">0 h</div><div class="s">&nbsp;</div></div>
+        <div class="stat"><div class="lb">sphere</div><div class="v" id="tSp"></div><div class="s" id="tSpL"></div></div>
+        <div class="stat"><div class="lb">shell</div><div class="v" id="tSh"></div><div class="s" id="tShL"></div></div>
       </div>
       <div class="viz">
         <canvas id="scene" width="400" height="400" aria-label="Sphere and shell, coloured by temperature"></canvas>
@@ -109,45 +121,48 @@
         <tr><td>Stored (sphere + shell warming up)</td><td id="eSto"></td></tr>
         <tr class="created"><td>Created from nothing</td><td id="eCre"></td></tr>
       </table>
-      <p class="ledger-note">created = to space + stored − produced. Energy conservation means this stays at zero.</p>
+      <p class="ledger-note">created = to space + stored − produced, the same bookkeeping as "energy created = P_out + dU/dt − P_int" on Postma's figures. Energy conservation means it stays at zero.</p>
     </section>
     <section class="card" aria-label="Power now">
       <h2>Power right now</h2>
       <table>
         <tr><td>Core</td><td id="pCore"></td></tr>
         <tr><td>Shell to space</td><td id="pOut"></td></tr>
-        <tr><td>Shell's emission reaching the sphere</td><td id="pBack"></td></tr>
-        <tr><td>…and paid for by the shell?</td><td id="pPaid"></td></tr>
+        <tr><td>Shell radiation reaching the sphere</td><td id="pBack"></td></tr>
+        <tr><td>…and lost by the shell?</td><td id="pPaid"></td></tr>
       </table>
       <p class="ledger-note" id="verdict"></p>
     </section>
   </div>
 
   <section class="card prose" aria-label="Explanation">
-    <h2>What the switch changes</h2>
-    <p>Everything else is identical: the sphere receives the core's power plus whatever the shell radiates onto it, and emits
-    <code>σT⁴</code> from its surface; the shell radiates to space from its outer face.</p>
+    <h2>What changes between the runs</h2>
+    <p>All three runs use the same equations for the steel wall (radial heat conduction) and its outer face (radiation to space at 0 K),
+    with the same parameters.</p>
+    <p><b>Sphere held at 253.7 K</b>: Postma's original run. The sphere's temperature is fixed by hand ("held constant" in his caption),
+    and the shell's inner face absorbs the sphere's radiation but emits nothing back. The sphere cannot warm, because it is not allowed to.</p>
+    <p><b>Back-radiation added to the sphere</b>: Postma's second run. The sphere now receives <code>A_sp·σ·T_in⁴</code> from the shell,
+    but the shell's inner boundary is unchanged: the shell never loses what it sends. The same energy is received by the sphere and kept
+    by the shell, so the ledger fills with energy created from nothing. His own figure labels it: "energy created = P_back".</p>
+    <p><b>Shell emits from both faces</b>: the sphere's equation is exactly the same as in his back-radiation run. The only change is one
+    term in the shell's inner boundary, <code>−σT_in⁴</code>: what the sphere receives from the shell, the shell loses. A surface that
+    absorbs infrared also emits it (Kirchhoff's law, which follows from the second law of thermodynamics). The ledger stays at zero,
+    space receives exactly the core's 2953 W once the system settles, and the sphere still ends up warmer than without the shell:
+    277.6 K instead of 253.7 K.</p>
+    <p>Why the sphere receives exactly <code>A_sp·σ·T_in⁴</code>: the inner face emits <code>A_in·σ·T_in⁴</code> inward, but only the
+    fraction <code>A_sp/A_in</code> hits the sphere (everything the sphere emits hits the shell, and view factors obey reciprocity);
+    the rest crosses the cavity and lands back on the shell. That is also where the <code>(r_sp/r_in)²</code> in the boundary condition comes from.</p>
+    <p>Net heat always flows from the warmer sphere to the cooler shell. The shell does not heat the sphere; the core does.
+    The shell reduces how fast the sphere loses heat, so the sphere must get warmer to get rid of the same 2953 W.
+    The same thing keeps spacecraft instruments warm: a radioisotope heater of about 1 W, wrapped in multilayer insulation, in vacuum.</p>
     <p>Not to be confused with the original: Willis Eschenbach's 2009 steel greenhouse already has the shell emitting from both faces
     ("a shell has two sides"). The absorb-only inner face comes from Postma's 2013 critique and his later simulations.</p>
-    <p><b>Inner face absorbs only</b> is the boundary condition printed on Postma's figures. The shell soaks up the sphere's radiation,
-    and in his "back-radiation" run the sphere also receives <code>A_sp·σ·T_sh⁴</code> from the shell, but the shell never loses it.
-    Energy is counted twice, so the ledger fills with energy created from nothing: in his own figure, "energy created = P_back".
-    The temperature rise in that run is real arithmetic on a broken ledger.</p>
-    <p><b>Both faces emit</b> is ordinary physics. A surface that absorbs infrared also emits it (Kirchhoff's law, which follows from
-    the second law of thermodynamics). What the sphere receives from the shell, the shell loses. Why exactly <code>A_sp·σ·T_sh⁴</code>? The inner face emits
-    <code>A_sh·σ·T_sh⁴</code> inward, but only the fraction <code>A_sp/A_sh</code> hits the sphere (everything the sphere emits hits
-    the shell, and view factors obey reciprocity); the rest crosses the cavity and lands back on the shell. The ledger stays at zero, space
-    receives exactly the core's power once the system settles, and the sphere still ends up warmer than without the shell:
-    <code>σT_sp⁴ = 235 × (1 + (r_sp/r_sh)²)</code> W/m² for a black shell. With Postma's geometry: 277.6 K instead of 253.7 K.</p>
-    <p>Net heat always flows from the warmer sphere to the cooler shell. The shell does not heat the sphere; the core does.
-    The shell reduces how fast the sphere loses heat, so the sphere must get warmer to get rid of the same 2953 W.</p>
-    <p>The same thing keeps spacecraft instruments warm: a radioisotope heater of about 1 W, wrapped in multilayer insulation, in vacuum.</p>
   </section>
 
   <footer>
-    Lumped model (one temperature for the sphere, one for the shell; the steel wall's conduction drop is 0.05 K).
-    The Python script in this repository solves the radial heat-conduction equation through the wall and reproduces Postma's
-    figures number by number. Sphere C = 0.95 MJ/K; shell: steel, 2 cm thick, ρ = 7850 kg/m³, c = 490 J/(kg·K).
+    Solved in the browser: 20 finite volumes across the 2 cm steel wall, implicit time steps of one minute, the sphere as a single
+    heat capacity. Sphere C = 0.95 MJ/K; shell: steel, ρ = 7850 kg/m³, c = 490 J/(kg·K), k = 45 W/(m·K). The Python script in this
+    repository solves the same equations and reproduces the numbers on Postma's figures to within 0.1%.
     <br>by <a href="https://x.com/splugged">@splugged</a>
   </footer>
 </main>
@@ -155,77 +170,104 @@
 <script>
 (() => {
   const SIGMA = 5.670374419e-8, RSP = 1.0, ASP = 4 * Math.PI * RSP * RSP, P = 2953, CSP = 0.95e6;
-  const T0 = Math.pow(P / ASP / SIGMA, 0.25);           // 253.7 K
-  const RHO = 7850, CST = 490, THICK = 0.02;
+  const T0 = Math.pow(P / ASP / SIGMA, 0.25);              // 253.7 K
+  const RHO = 7850, CST = 490, K = 45, THICK = 0.02, N = 20, DT = 60;
   const $ = id => document.getElementById(id);
 
-  const state = { mode: "phys", ratio: 1.52, eps: 1, speed: 3, running: true };
-  let sim;
+  const state = { mode: "physics", ratio: 1.5, eps: 1, speed: 3, running: true };
+  let sim, G;
 
-  function params() {
-    const rsh = state.ratio * RSP, ash = 4 * Math.PI * rsh * rsh;
-    const csh = RHO * CST * ash * THICK;
-    const eps = state.mode === "phys" ? state.eps : 1;
-    return { ash, csh, eps, x: ASP / ash };
+  function geometry() {
+    const rin = state.ratio * RSP, rout = rin + THICK;
+    const rf = Array.from({ length: N + 1 }, (_, i) => rin + (rout - rin) * i / N);
+    const rm = Array.from({ length: N }, (_, i) => 0.5 * (rf[i] + rf[i + 1]));
+    const cap = rm.map((_, i) => RHO * CST * 4 / 3 * Math.PI * (rf[i + 1] ** 3 - rf[i] ** 3));
+    const g = Array.from({ length: N - 1 }, (_, i) => K * 4 * Math.PI * rf[i + 1] ** 2 / (rm[i + 1] - rm[i]));
+    const Ain = 4 * Math.PI * rin * rin, Aout = 4 * Math.PI * rout * rout;
+    const eps = state.mode === "physics" ? state.eps : 1;
+    const D = 1 + ASP / Ain * (1 / eps - 1);                 // grey shell, black sphere, concentric
+    return { rin, rout, cap, g, Ain, Aout, eps, D, Csh: cap.reduce((a, b) => a + b, 0) };
   }
 
-  // fluxes (W) for current temperatures
-  function fluxes(Tsp, Tsh, p) {
-    let sphereNet, shellIn, toSphere, paid;
-    if (state.mode === "phys") {
-      const D = 1 + p.x * (1 / p.eps - 1);
-      const qNet = ASP * SIGMA * (Tsp ** 4 - Tsh ** 4) / D;      // net sphere -> shell (gray concentric)
-      sphereNet = P - qNet;
-      shellIn = qNet;
-      toSphere = ASP * SIGMA * Tsh ** 4 / D;                     // shell emission absorbed by sphere
-      paid = toSphere;
+  // ---------- one implicit step of the wall, explicit exchange with the sphere ----------
+  const a = new Float64Array(N), b = new Float64Array(N), c = new Float64Array(N), d = new Float64Array(N);
+  function step() {
+    const T = sim.T, Tin = T[0], Ts = T[N - 1];
+    let qin, pback = 0;
+    if (state.mode === "original") {
+      qin = ASP * SIGMA * T0 ** 4;                           // sphere fixed at 253.7 K
+    } else if (state.mode === "backrad") {
+      qin = ASP * SIGMA * sim.Tsp ** 4;                      // inner face absorbs only
+      pback = ASP * SIGMA * Tin ** 4;                        // ...but the sphere receives this too
+      sim.Tsp += DT * (P + pback - ASP * SIGMA * sim.Tsp ** 4) / CSP;
     } else {
-      toSphere = ASP * SIGMA * Tsh ** 4;                         // added to the sphere...
-      sphereNet = P + toSphere - ASP * SIGMA * Tsp ** 4;
-      shellIn = ASP * SIGMA * Tsp ** 4;                          // ...never removed from the shell
-      paid = 0;
+      qin = ASP * SIGMA * (sim.Tsp ** 4 - Tin ** 4) / G.D;   // inner face absorbs and emits
+      pback = ASP * SIGMA * Tin ** 4 / G.D;
+      sim.Tsp += DT * (P - qin) / CSP;
     }
-    const out = p.eps * p.ash * SIGMA * Tsh ** 4;
-    return { sphereNet, shellNet: shellIn - out, out, toSphere, paid };
+    // wall: cap (Tn - T)/dt = conduction(Tn) + sources; outer emission linearised around Ts
+    const e4 = G.eps * G.Aout * SIGMA;
+    for (let i = 0; i < N; i++) {
+      const gl = i > 0 ? G.g[i - 1] : 0, gr = i < N - 1 ? G.g[i] : 0;
+      a[i] = -gl; c[i] = -gr; b[i] = G.cap[i] / DT + gl + gr; d[i] = G.cap[i] / DT * T[i];
+    }
+    d[0] += qin;
+    b[N - 1] += 4 * e4 * Ts ** 3; d[N - 1] += 3 * e4 * Ts ** 4;
+    for (let i = 1; i < N; i++) { const m = a[i] / b[i - 1]; b[i] -= m * c[i - 1]; d[i] -= m * d[i - 1]; }
+    T[N - 1] = d[N - 1] / b[N - 1];
+    for (let i = N - 2; i >= 0; i--) T[i] = (d[i] - c[i] * T[i + 1]) / b[i];
+    const pout = e4 * (4 * Ts ** 3 * T[N - 1] - 3 * Ts ** 4);
+    sim.prod += (state.mode === "original" ? ASP * SIGMA * T0 ** 4 : P) * DT;
+    sim.out += pout * DT;
+    sim.t += DT;
+    sim.now = { qin, pback, pout };
   }
 
-  function steady(p) {
-    const q = P / ASP;
-    if (state.mode === "phys") {
-      const Tsp = Math.pow(q * (1 + p.x * (2 / p.eps - 1)) / SIGMA, 0.25);
-      const Tsh = Math.pow(P / (p.eps * p.ash * SIGMA), 0.25);
-      return { Tsp, Tsh, out: P };
+  // ---------- long-run limits ----------
+  function steady() {
+    const drop = Q => Q / (4 * Math.PI * K) * (1 / G.rin - 1 / G.rout);
+    if (state.mode === "original") {
+      const Q = ASP * SIGMA * T0 ** 4, To = Math.pow(Q / (G.Aout * SIGMA), 0.25);
+      return { Tsp: T0, Tsh: To, out: Q };
     }
-    const Tsp = Math.pow(q / (1 - p.x) / SIGMA, 0.25);
-    const Tsh = Math.pow(p.x * SIGMA * Tsp ** 4 / SIGMA, 0.25);
-    return { Tsp, Tsh, out: ASP * SIGMA * Tsp ** 4 };
+    if (state.mode === "physics") {
+      const To = Math.pow(P / (G.eps * G.Aout * SIGMA), 0.25), Ti = To + drop(P);
+      return { Tsp: Math.pow(Ti ** 4 + P * G.D / (ASP * SIGMA), 0.25), Tsh: To, out: P };
+    }
+    // back-radiation: the wall passes A_sp σ T_sp⁴; sphere: σT_sp⁴ = P/A_sp + σT_in⁴
+    const f = Tsp => { const Q = ASP * SIGMA * Tsp ** 4, To = Math.pow(Q / (G.Aout * SIGMA), 0.25);
+      return SIGMA * Tsp ** 4 - P / ASP - SIGMA * (To + drop(Q)) ** 4; };
+    let lo = T0, hi = 2000;
+    if (f(hi) < 0) return { Tsp: Infinity, Tsh: Infinity, out: Infinity };
+    for (let k = 0; k < 80; k++) { const m = (lo + hi) / 2; f(m) > 0 ? hi = m : lo = m; }
+    const Q = ASP * SIGMA * lo ** 4;
+    return { Tsp: lo, Tsh: Math.pow(Q / (G.Aout * SIGMA), 0.25), out: Q };
   }
 
   function reset() {
-    const p = params();
-    sim = { t: 0, Tsp: T0, Tsh: 0, prod: 0, out: 0, p, hist: [[0, T0, 0]], ss: steady(p) };
-    $("bc").textContent = state.mode === "phys"
-      ? "shell inner face:  q = A_sp·σ·(T_sp⁴ − T_sh⁴)"
-      : "shell inner face:  q = A_sp·σ·T_sp⁴      (no −T_sh⁴)";
-    $("em").disabled = state.mode !== "phys";
-    $("emNote").textContent = state.mode === "phys"
+    G = geometry();
+    sim = { t: 0, Tsp: T0, T: new Float64Array(N), prod: 0, out: 0, hist: [[0, T0, 0]], now: { qin: 0, pback: 0, pout: 0 } };
+    sim.ss = steady();
+    $("eq").innerHTML = equations();
+    $("em").disabled = state.mode !== "physics";
+    $("emNote").textContent = state.mode === "physics"
       ? "Steel is not a black body. A less emissive shell insulates better, like a thermos."
-      : "Postma's run uses black surfaces; emissivity fixed at 1 in this mode.";
+      : "Postma's runs use black surfaces; emissivity fixed at 1.";
     render();
   }
 
-  function step(dt) {
-    const p = sim.p;
-    const f = (Tsp, Tsh) => { const F = fluxes(Tsp, Tsh, p); return [F.sphereNet / CSP, F.shellNet / p.csh, F.out]; };
-    const a = f(sim.Tsp, sim.Tsh);
-    const b = f(sim.Tsp + a[0] * dt / 2, sim.Tsh + a[1] * dt / 2);
-    const c = f(sim.Tsp + b[0] * dt / 2, sim.Tsh + b[1] * dt / 2);
-    const d = f(sim.Tsp + c[0] * dt, sim.Tsh + c[1] * dt);
-    sim.Tsp += dt / 6 * (a[0] + 2 * b[0] + 2 * c[0] + d[0]);
-    sim.Tsh += dt / 6 * (a[1] + 2 * b[1] + 2 * c[1] + d[1]);
-    sim.out += dt / 6 * (a[2] + 2 * b[2] + 2 * c[2] + d[2]);
-    sim.prod += P * dt;
-    sim.t += dt;
+  function equations() {
+    const inner = state.mode === "physics"
+      ? `−k ∂T/∂r = σ(T<sub>sp</sub><sup>4</sup> <mark>− T<sub>in</sub><sup>4</sup></mark>)(r<sub>sp</sub>/r<sub>in</sub>)<sup>2</sup>`
+      : `−k ∂T/∂r = σT<sub>sp</sub><sup>4</sup>(r<sub>sp</sub>/r<sub>in</sub>)<sup>2</sup>`;
+    const sphere = state.mode === "original"
+      ? `T<sub>sp</sub> = 253.7 K <mark class="bad">held constant</mark>`
+      : `C<sub>sp</sub> dT<sub>sp</sub>/dt = P<sub>int</sub> + A<sub>sp</sub>σT<sub>in</sub><sup>4</sup> − A<sub>sp</sub>σT<sub>sp</sub><sup>4</sup>`;
+    const tag = state.mode === "physics" ? "the one term that changes" : "absorbs, never emits inward";
+    return `<span class="l">shell</span><span class="e">ρc ∂T/∂t = (1/r<sup>2</sup>) ∂/∂r (k r<sup>2</sup> ∂T/∂r)</span>
+      <span class="l">inner face</span><span class="e">${inner}<span class="note">${tag}</span></span>
+      <span class="l">outer face</span><span class="e">−k ∂T/∂r = σT<sub>sh</sub><sup>4</sup><span class="note">to space at 0 K</span></span>
+      <span class="l">sphere</span><span class="e">${sphere}</span>`;
   }
 
   // ---------- drawing ----------
@@ -239,48 +281,42 @@
     }
     return `rgb(${stops[stops.length - 1][1]})`;
   }
+  const modeColor = () => ({ original: "#a0aec0", backrad: "#ff6b6b", physics: "#4fd1c5" })[state.mode];
 
-  function drawScene() {
-    const cv = $("scene"), g = cv.getContext("2d"), W = cv.width, H = cv.height, cx = W / 2, cy = H / 2;
-    g.clearRect(0, 0, W, H);
-    const Rmax = W * 0.46, rsh = Rmax, rsp = Rmax / state.ratio;
-    g.lineWidth = Math.max(6, W * 0.02);
-    g.strokeStyle = tcolor(sim.Tsh);
-    g.beginPath(); g.arc(cx, cy, rsh - g.lineWidth / 2, 0, 2 * Math.PI); g.stroke();
-    const grd = g.createRadialGradient(cx - rsp * 0.3, cy - rsp * 0.3, rsp * 0.1, cx, cy, rsp);
-    grd.addColorStop(0, "rgba(255,255,255,0.25)"); grd.addColorStop(1, "rgba(0,0,0,0.15)");
-    g.fillStyle = tcolor(sim.Tsp); g.beginPath(); g.arc(cx, cy, rsp, 0, 2 * Math.PI); g.fill();
-    g.fillStyle = grd; g.fill();
-    // arrows: sphere -> shell (yellow), shell -> sphere (amber or red if unpaid), shell -> space
-    const F = fluxes(sim.Tsp, sim.Tsh, sim.p);
-    const n = 12;
-    for (let i = 0; i < n; i++) {
-      const th = (i + 0.5) * 2 * Math.PI / n, c = Math.cos(th), s = Math.sin(th);
-      const inner = rsp + 6, outer = rsh - g.lineWidth - 6;
-      if (outer - inner > 14) {
-        line(g, cx + c * inner, cy + s * inner, cx + c * (inner + (outer - inner) * 0.45), cy + s * (inner + (outer - inner) * 0.45), "#ffd166", 2);
-        if (F.toSphere > 1) {
-          const col = state.mode === "phys" ? "#4fd1c5" : "#ff6b6b";
-          const a = (i % 2) ? 0.55 : 0.6;
-          line(g, cx + c * outer, cy + s * outer, cx + c * (outer - (outer - inner) * 0.4), cy + s * (outer - (outer - inner) * 0.4), col, 2, Math.min(1, F.toSphere / 1500) * a + 0.25);
-        }
-      }
-    }
-  }
   function line(g, x0, y0, x1, y1, col, w, alpha = 1) {
     g.save(); g.globalAlpha = alpha; g.strokeStyle = col; g.lineWidth = w;
     g.beginPath(); g.moveTo(x0, y0); g.lineTo(x1, y1); g.stroke(); g.restore();
+  }
+  function drawScene() {
+    const cv = $("scene"), g = cv.getContext("2d"), W = cv.width, H = cv.height, cx = W / 2, cy = H / 2;
+    g.clearRect(0, 0, W, H);
+    const rsh = W * 0.46, rsp = rsh / state.ratio, lw = Math.max(6, W * 0.02);
+    g.lineWidth = lw; g.strokeStyle = tcolor(sim.T[N - 1]);
+    g.beginPath(); g.arc(cx, cy, rsh - lw / 2, 0, 2 * Math.PI); g.stroke();
+    const grd = g.createRadialGradient(cx - rsp * 0.3, cy - rsp * 0.3, rsp * 0.1, cx, cy, rsp);
+    grd.addColorStop(0, "rgba(255,255,255,0.25)"); grd.addColorStop(1, "rgba(0,0,0,0.15)");
+    g.fillStyle = tcolor(sim.Tsp); g.beginPath(); g.arc(cx, cy, rsp, 0, 2 * Math.PI); g.fill(); g.fillStyle = grd; g.fill();
+    const n = 12;
+    for (let i = 0; i < n; i++) {
+      const th = (i + 0.5) * 2 * Math.PI / n, co = Math.cos(th), si = Math.sin(th);
+      const inner = rsp + 6, outer = rsh - lw - 6;
+      if (outer - inner > 14) {
+        line(g, cx + co * inner, cy + si * inner, cx + co * (inner + (outer - inner) * 0.45), cy + si * (inner + (outer - inner) * 0.45), "#ffd166", 2);
+        if (sim.now.pback > 1) line(g, cx + co * outer, cy + si * outer, cx + co * (outer - (outer - inner) * 0.4), cy + si * (outer - (outer - inner) * 0.4),
+          modeColor(), 2, Math.min(1, sim.now.pback / 1500) * 0.6 + 0.25);
+      }
+    }
   }
 
   function drawChart() {
     const cv = $("chart"), g = cv.getContext("2d"), dpr = window.devicePixelRatio || 1;
     const W = Math.max(260, cv.clientWidth || 600), H = Math.round(W * 0.58);
     if (cv.width !== Math.round(W * dpr) || cv.height !== Math.round(H * dpr)) { cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr); }
-    g.setTransform(dpr, 0, 0, dpr, 0, 0);
-    g.clearRect(0, 0, W, H);
+    g.setTransform(dpr, 0, 0, dpr, 0, 0); g.clearRect(0, 0, W, H);
     const L = 40, R = 10, Tp = 22, B = 26;
     const tmax = Math.max(80, sim.t / 3600 * 1.05);
-    const ymax = Math.max(320, Math.ceil(Math.max(sim.ss.Tsp, ...sim.hist.map(h => h[1])) / 50) * 50 + 10);
+    const top = isFinite(sim.ss.Tsp) ? sim.ss.Tsp : 400;
+    const ymax = Math.max(320, Math.ceil(Math.max(top, ...sim.hist.map(h => h[1])) / 50) * 50 + 10);
     const X = t => L + (W - L - R) * t / tmax, Y = T => Tp + (H - Tp - B) * (1 - T / ymax);
     g.font = "12px -apple-system, Segoe UI, Roboto, sans-serif"; g.fillStyle = "#8b98a5"; g.strokeStyle = "#2a333d"; g.lineWidth = 1;
     g.textAlign = "right";
@@ -289,11 +325,9 @@
     const tstep = tmax > 200 ? 50 : tmax > 100 ? 25 : 10;
     for (let t = 0; t <= tmax; t += tstep) if (X(t) < W - R - 58) g.fillText(t, X(t), H - 8);
     g.textAlign = "left"; g.fillText("K", 6, 12); g.textAlign = "right"; g.fillText("time (h)", W - R, H - 8); g.textAlign = "left";
-    // references
+    const col = modeColor();
     dash(g, Y(T0), "#8b98a5", "sphere alone 253.7 K", L, W - R, 14);
-    const col = state.mode === "phys" ? "#4fd1c5" : "#ff6b6b";
-    dash(g, Y(sim.ss.Tsp), col, `sphere long run ${sim.ss.Tsp.toFixed(1)} K`, L, W - R);
-    // curves
+    if (state.mode !== "original" && isFinite(sim.ss.Tsp)) dash(g, Y(sim.ss.Tsp), col, `sphere long run ${sim.ss.Tsp.toFixed(1)} K`, L, W - R);
     curve(g, sim.hist.map(h => [X(h[0]), Y(h[1])]), col, 2.5);
     curve(g, sim.hist.map(h => [X(h[0]), Y(h[2])]), col, 1.6, [6, 5]);
   }
@@ -306,39 +340,44 @@
     pts.forEach(([x, y], i) => i ? g.lineTo(x, y) : g.moveTo(x, y)); g.stroke(); g.restore();
   }
 
-  const fmtK = T => `${T.toFixed(1)} K`, fmtMJ = J => `${(J / 1e6).toFixed(1)} MJ`, fmtW = W => `${Math.round(W)} W`;
+  const fmtK = T => isFinite(T) ? `${T.toFixed(1)} K` : "no limit", fmtMJ = J => `${(J / 1e6).toFixed(1)} MJ`, fmtW = W => `${Math.round(W)} W`;
 
   function render() {
-    const p = sim.p, F = fluxes(sim.Tsp, sim.Tsh, p);
+    const shell = sim.T[N - 1];
     $("tH").textContent = `${(sim.t / 3600).toFixed(1)} h`;
-    $("tSp").textContent = fmtK(sim.Tsp); $("tSh").textContent = fmtK(sim.Tsh);
-    $("tSpL").textContent = `long run ${fmtK(sim.ss.Tsp)}`; $("tShL").textContent = `long run ${fmtK(sim.ss.Tsh)}`;
-    const stored = CSP * (sim.Tsp - T0) + p.csh * sim.Tsh;
+    $("tSp").textContent = fmtK(sim.Tsp); $("tSh").textContent = fmtK(shell);
+    $("tSpL").textContent = state.mode === "original" ? "held constant" : `long run ${fmtK(sim.ss.Tsp)}`;
+    $("tShL").textContent = `long run ${fmtK(sim.ss.Tsh)}`;
+    let stored = CSP * (sim.Tsp - T0); for (let i = 0; i < N; i++) stored += G.cap[i] * sim.T[i];
     const created = sim.out + stored - sim.prod;
     $("eProd").textContent = fmtMJ(sim.prod); $("eOut").textContent = fmtMJ(sim.out); $("eSto").textContent = fmtMJ(stored);
-    const ce = $("eCre"); const zero = Math.abs(created) < 0.05e6;
+    const ce = $("eCre"), zero = Math.abs(created) < 0.05e6;
     ce.textContent = zero ? "0.0 MJ" : `${created > 0 ? "+" : ""}${fmtMJ(created)}`;
     ce.className = zero ? "ok" : "bad";
-    $("pCore").textContent = fmtW(P); $("pOut").textContent = fmtW(F.out);
-    $("pBack").textContent = fmtW(F.toSphere);
-    const paid = $("pPaid"); paid.textContent = state.mode === "phys" ? "yes" : "no";
-    paid.className = state.mode === "phys" ? "ok" : "bad";
-    $("verdict").textContent = state.mode === "phys"
-      ? `The shell loses what it sends back. In the long run space receives exactly ${fmtW(P)}, and the sphere settles at ${fmtK(sim.ss.Tsp)}, ${(sim.ss.Tsp - T0).toFixed(1)} K warmer than without the shell.`
-      : `The shell sends ${fmtW(F.toSphere)} to the sphere without losing it. In the long run space would receive ${fmtW(sim.ss.out)} from a ${fmtW(P)} core: that excess is the "created" energy.`;
-    $("rrO").textContent = state.ratio.toFixed(2); $("emO").textContent = (state.mode === "phys" ? state.eps : 1).toFixed(2);
+    $("pCore").textContent = fmtW(P); $("pOut").textContent = fmtW(sim.now.pout);
+    $("pBack").textContent = state.mode === "original" ? "not counted" : fmtW(sim.now.pback);
+    const paid = $("pPaid");
+    paid.textContent = state.mode === "physics" ? "yes" : state.mode === "backrad" ? "no" : "n/a";
+    paid.className = state.mode === "physics" ? "ok" : state.mode === "backrad" ? "bad" : "";
+    $("verdict").textContent = {
+      original: "The sphere's temperature is fixed by hand, so this run cannot show whether the shell warms it. The shell warms up to " + fmtK(sim.ss.Tsh) + " and then passes on what the sphere emits.",
+      backrad: `The shell sends ${fmtW(sim.now.pback)} to the sphere without losing it. In the long run space would receive ${isFinite(sim.ss.out) ? fmtW(sim.ss.out) : "ever more"} from a ${fmtW(P)} core: that excess is the "created" energy.`,
+      physics: `The shell loses what it sends back. In the long run space receives exactly ${fmtW(P)}, and the sphere settles at ${fmtK(sim.ss.Tsp)}, ${(sim.ss.Tsp - T0).toFixed(1)} K warmer than without the shell.`,
+    }[state.mode];
+    $("rrO").textContent = state.ratio.toFixed(2);
+    $("emO").textContent = (state.mode === "physics" ? state.eps : 1).toFixed(2);
     $("spO").textContent = `${state.speed} h/s`;
     drawScene(); drawChart();
   }
 
-  let last = performance.now();
+  let last = performance.now(), acc = 0;
   function loop(now) {
     const wall = Math.min(0.1, (now - last) / 1000); last = now;
     if (state.running && sim.t < 400 * 3600) {
-      let simSec = wall * state.speed * 3600; const dt = 60;
-      while (simSec > 0) { const h = Math.min(dt, simSec); step(h); simSec -= h; }
+      acc += wall * state.speed * 3600;
+      while (acc >= DT) { step(); acc -= DT; }
       const th = sim.t / 3600, lh = sim.hist[sim.hist.length - 1][0];
-      if (th - lh >= 0.25) sim.hist.push([th, sim.Tsp, sim.Tsh]);
+      if (th - lh >= 0.25) sim.hist.push([th, sim.Tsp, sim.T[N - 1]]);
       render();
     }
     requestAnimationFrame(loop);
@@ -346,16 +385,20 @@
 
   function setMode(m) {
     state.mode = m;
-    $("bPhys").setAttribute("aria-pressed", m === "phys"); $("bPost").setAttribute("aria-pressed", m === "post");
+    document.querySelectorAll(".mode button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.m === m)));
     reset();
   }
-  $("bPhys").onclick = () => setMode("phys");
-  $("bPost").onclick = () => setMode("post");
+  document.querySelectorAll(".mode button").forEach(b => b.addEventListener("click", () => setMode(b.dataset.m)));
   $("rr").oninput = e => { state.ratio = +e.target.value; reset(); };
   $("em").oninput = e => { state.eps = +e.target.value; reset(); };
   $("sp").oninput = e => { state.speed = +e.target.value; render(); };
   $("play").onclick = () => { state.running = !state.running; $("play").textContent = state.running ? "Pause" : "Play"; };
-  $("reset").onclick = reset;
+  $("reset").onclick = () => { acc = 0; reset(); };
+
+  // test hook: run the model headless for a given number of hours
+  window.__runHours = (m, hours) => { setMode(m); const n = Math.round(hours * 3600 / DT); for (let i = 0; i < n; i++) step();
+    let stored = CSP * (sim.Tsp - T0); for (let i = 0; i < N; i++) stored += G.cap[i] * sim.T[i];
+    return { Tsp: sim.Tsp, Tsh: sim.T[N - 1], pout: sim.now.pout, pback: sim.now.pback, created: (sim.out + stored - sim.prod) / 1e6, ss: sim.ss }; };
 
   reset();
   requestAnimationFrame(loop);
